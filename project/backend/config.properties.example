@@ -1,0 +1,13 @@
+# Copy this file to config.properties (same folder) and fill in your local
+# SQL Server details. config.properties is git-ignored - never commit real
+# credentials.
+
+db.host=localhost
+db.port=1433
+db.name=EmployeeManagementSystem
+db.user=sa
+db.password=YOUR_PASSWORD_HERE
+# Set to true only if your SQL Server instance uses a self-signed cert (typical for local dev)
+db.trustServerCertificate=true
+
+server.port=8080
