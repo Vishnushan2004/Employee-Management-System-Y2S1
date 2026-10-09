@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { attendanceService } from "../services/attendanceService";
 import { LoadingState, EmptyState, ErrorBanner, StatusBadge } from "../components/Common";
 

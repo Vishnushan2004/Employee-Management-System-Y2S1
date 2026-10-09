@@ -26,6 +26,7 @@ export const recruitmentService = {
   listApplications: () => api.get("/applications"),
   createApplication: (a) => api.post("/applications", a),
   updateApplicationStatus: (id, status) => api.put(`/applications/${id}/status`, { status }),
+  downloadCv: (id) => api.get(`/applications/${id}/cv`),
   listInterviews: () => api.get("/interviews"),
   scheduleInterview: (i) => api.post("/interviews", i),
   recordInterviewResult: (id, result, remarks) => api.put(`/interviews/${id}/result`, { result, remarks }),

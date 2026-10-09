@@ -384,118 +384,13 @@ table.data-table tbody tr:hover {
   padding: 20px;
 }
 
-.login-shell {
-  display: flex;
-  width: 100%;
-  max-width: 860px;
-  min-height: 520px;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
-}
-
-/* ---- Left panel: CSS-only illustration ---- */
-
-.login-visual {
-  position: relative;
-  flex: 1.1;
-  min-width: 0;
-  overflow: hidden;
-  background: linear-gradient(200deg, #1b3550 0%, #122438 70%);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 36px;
-  padding: 40px;
-}
-
-@media (min-width: 760px) {
-  .login-visual {
-    display: flex;
-  }
-}
-
-.visual-orbits {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  flex-shrink: 0;
-}
-
-.visual-hub {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #d99a2f;
-  transform: translate(-50%, -50%);
-}
-
-.visual-orbit {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border: 1px dashed rgba(223, 230, 238, 0.25);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: spin linear infinite;
-}
-
-.visual-orbit-1 { width: 100px; height: 100px; animation-duration: 9s; }
-.visual-orbit-2 { width: 150px; height: 150px; animation-duration: 14s; animation-direction: reverse; }
-.visual-orbit-3 { width: 200px; height: 200px; animation-duration: 20s; }
-
-.visual-node {
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  transform: translateX(-50%);
-}
-
-.visual-node-a { background: #7fd4c4; }
-.visual-node-b { background: #6fa8e0; }
-.visual-node-c { background: #e0a06f; }
-
-@keyframes spin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to   { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-.visual-caption {
-  text-align: center;
-  max-width: 300px;
-}
-
-.visual-caption-title {
-  color: #ffffff;
-  font-size: 19px;
-  font-weight: 700;
-}
-
-.visual-caption-sub {
-  margin-top: 8px;
-  color: #a9bacd;
-  font-size: 12.5px;
-  line-height: 1.6;
-}
-
-/* ---- Right panel: the actual form ---- */
-
 .login-card {
   width: 100%;
   max-width: 380px;
-  flex: 1;
   background: var(--color-surface);
-  padding: 40px 34px 32px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  border-radius: 10px;
+  padding: 32px 30px 28px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
 }
 
 .login-brand {

@@ -6,19 +6,18 @@ javac -cp "lib\mssql-jdbc-13.4.0.jre11.jar" -d out (Get-ChildItem -Recurse -Filt
 # Backend run
 java -cp "out;lib\mssql-jdbc-13.4.0.jre11.jar" com.sliit.ems.Main
 
-
 # Frontend run
 
 npm install
-
 npm run build
 
 # Frontend run
-
-#for start Front End:=  npm run dev
+#for start Front End: npm run dev
 
 # red Error
 Ctrl + shift + P to solve red code errors
+
+java *** reload
 
 
 

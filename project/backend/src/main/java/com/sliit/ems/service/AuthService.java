@@ -46,7 +46,7 @@ public class AuthService {
             return LoginResult.fail("Invalid username or password.");
         }
 
-        String token = SessionManager.createSession(account.userId, account.employeeId, account.username, account.roleName);
+        String token = SessionManager.createSession(account.userId, account.employeeId, account.applicantId, account.username, account.roleName);
         userAccountDAO.updateLastLogin(account.userId);
         auditLogDAO.record(account.userId, "LOGIN", "AUTH", "User " + account.username + " logged in.");
         return LoginResult.ok(token, account);

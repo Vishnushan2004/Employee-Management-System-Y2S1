@@ -6,100 +6,47 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Small JSON utility for this university project.
+ * Small JSON helper for the Employee Management System.
  *
  * Supports:
- *
- * WRITING:
- * - Map<String, Object>
- * - List<Object>
- * - String
- * - Number
- * - Boolean
- * - null
- *
- * READING:
- * - Objects
- * - Arrays
- * - Strings
- * - Numbers
- * - Booleans
- * - null
- *
- * Unlike the previous version, nested arrays and objects are parsed
- * into real Java Lists and Maps.
- *
- * This is important for payroll requests such as:
- *
- * "allowances": [
- * {
- * "type": "Transport",
- * "amount": 500
- * }
- * ]
- *
- * and:
- *
- * "deductions": [
- * {
- * "type": "EPF Employee Share",
- * "amount": 500
- * }
- * ]
+ * - Writing Map, List, String, Number, Boolean and null
+ * - Reading JSON objects
+ * - Reading nested JSON objects
+ * - Reading JSON arrays
+ * - Reading arrays containing objects
  */
 public class Json {
 
     // ============================================================
-    // WRITING JSON
+    // WRITING
     // ============================================================
 
     public static String write(Object value) {
-
         StringBuilder sb = new StringBuilder();
-
         writeValue(value, sb);
-
         return sb.toString();
     }
 
     @SuppressWarnings("unchecked")
-    private static void writeValue(
-            Object value,
-            StringBuilder sb) {
+    private static void writeValue(Object value, StringBuilder sb) {
 
         if (value == null) {
-
             sb.append("null");
 
         } else if (value instanceof String s) {
-
             writeString(s, sb);
 
-        } else if (value instanceof Number
-                || value instanceof Boolean) {
-
-            sb.append(value);
+        } else if (value instanceof Number || value instanceof Boolean) {
+            sb.append(value.toString());
 
         } else if (value instanceof Map) {
-
-            writeObject(
-                    (Map<String, Object>) value,
-                    sb);
+            writeObject((Map<String, Object>) value, sb);
 
         } else if (value instanceof List) {
-
-            writeArray(
-                    (List<Object>) value,
-                    sb);
+            writeArray((List<Object>) value, sb);
 
         } else {
-
-            /*
-             * Fallback for dates, enums, etc.
-             */
-            writeString(
-                    value.toString(),
-                    sb);
+            writeString(value.toString(), sb);
         }
     }
 
@@ -119,15 +66,9 @@ public class Json {
 
             first = false;
 
-            writeString(
-                    entry.getKey(),
-                    sb);
-
+            writeString(entry.getKey(), sb);
             sb.append(':');
-
-            writeValue(
-                    entry.getValue(),
-                    sb);
+            writeValue(entry.getValue(), sb);
         }
 
         sb.append('}');
@@ -149,58 +90,38 @@ public class Json {
 
             first = false;
 
-            writeValue(
-                    value,
-                    sb);
+            writeValue(value, sb);
         }
 
         sb.append(']');
     }
 
     private static void writeString(
-            String value,
+            String s,
             StringBuilder sb) {
 
         sb.append('"');
 
-        for (int i = 0; i < value.length(); i++) {
+        for (int i = 0; i < s.length(); i++) {
 
-            char c = value.charAt(i);
+            char c = s.charAt(i);
 
             switch (c) {
 
-                case '"' ->
-                    sb.append("\\\"");
-
-                case '\\' ->
-                    sb.append("\\\\");
-
-                case '\n' ->
-                    sb.append("\\n");
-
-                case '\r' ->
-                    sb.append("\\r");
-
-                case '\t' ->
-                    sb.append("\\t");
-
-                case '\b' ->
-                    sb.append("\\b");
-
-                case '\f' ->
-                    sb.append("\\f");
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
 
                 default -> {
 
                     if (c < 0x20) {
-
                         sb.append(
                                 String.format(
                                         "\\u%04x",
                                         (int) c));
-
                     } else {
-
                         sb.append(c);
                     }
                 }
@@ -210,42 +131,45 @@ public class Json {
         sb.append('"');
     }
 
-    // ============================================================
-    // OBJECT HELPER
-    // ============================================================
-
     public static Map<String, Object> obj() {
-
         return new LinkedHashMap<>();
     }
 
     // ============================================================
-    // PARSE OBJECT
+    // READING
     // ============================================================
 
     /**
-     * Parses a JSON object into a Java Map.
+     * Parses a JSON object into Map<String,Object>.
+     *
+     * Supports:
+     * - String
+     * - Number
+     * - Boolean
+     * - null
+     * - nested objects
+     * - arrays
+     * - arrays containing objects
      */
-    public static Map<String, Object> parseObject(
-            String json) {
+    public static Map<String, Object> parseObject(String json) {
 
         if (json == null || json.isBlank()) {
-
             return new LinkedHashMap<>();
         }
 
         Parser parser = new Parser(json);
 
-        Object value = parser.parse();
+        parser.skipWhitespace();
 
-        if (!(value instanceof Map)) {
+        Map<String, Object> result = parser.parseObject();
 
+        parser.skipWhitespace();
+
+        if (!parser.isEnd()) {
             throw new IllegalArgumentException(
-                    "Expected a JSON object.");
+                    "Unexpected characters after JSON object at position "
+                            + parser.position());
         }
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> result = (Map<String, Object>) value;
 
         return result;
     }
@@ -260,11 +184,9 @@ public class Json {
 
         Object value = obj.get(key);
 
-        if (value == null) {
-            return null;
-        }
-
-        return value.toString();
+        return value == null
+                ? null
+                : value.toString();
     }
 
     public static Integer getInt(
@@ -278,12 +200,10 @@ public class Json {
         }
 
         if (value instanceof Number number) {
-
             return number.intValue();
         }
 
-        return Integer.parseInt(
-                value.toString());
+        return Integer.parseInt(value.toString());
     }
 
     public static Double getDouble(
@@ -297,88 +217,10 @@ public class Json {
         }
 
         if (value instanceof Number number) {
-
             return number.doubleValue();
         }
 
-        return Double.parseDouble(
-                value.toString());
-    }
-
-    public static Boolean getBoolean(
-            Map<String, Object> obj,
-            String key) {
-
-        Object value = obj.get(key);
-
-        if (value == null) {
-            return null;
-        }
-
-        if (value instanceof Boolean b) {
-
-            return b;
-        }
-
-        return Boolean.parseBoolean(
-                value.toString());
-    }
-
-    /**
-     * Returns a JSON array as a Java List.
-     */
-    public static List<Object> getList(
-            Map<String, Object> obj,
-            String key) {
-
-        Object value = obj.get(key);
-
-        if (value == null) {
-
-            return new ArrayList<>();
-        }
-
-        if (!(value instanceof List)) {
-
-            throw new IllegalArgumentException(
-                    "'" + key + "' must be a JSON array.");
-        }
-
-        @SuppressWarnings("unchecked")
-        List<Object> list = (List<Object>) value;
-
-        return list;
-    }
-
-    /**
-     * Returns a JSON array containing objects as:
-     *
-     * List<Map<String,Object>>
-     */
-    public static List<Map<String, Object>> getObjectList(
-            Map<String, Object> obj,
-            String key) {
-
-        List<Object> rawList = getList(obj, key);
-
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        for (Object item : rawList) {
-
-            if (!(item instanceof Map)) {
-
-                throw new IllegalArgumentException(
-                        "Every item in '" + key
-                                + "' must be a JSON object.");
-            }
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> map = (Map<String, Object>) item;
-
-            result.add(map);
-        }
-
-        return result;
+        return Double.parseDouble(value.toString());
     }
 
     // ============================================================
@@ -387,86 +229,109 @@ public class Json {
 
     private static class Parser {
 
-        private final String input;
+        private final String s;
+        private int i = 0;
 
-        private int position = 0;
-
-        Parser(String input) {
-
-            this.input = input;
+        Parser(String s) {
+            this.s = s;
         }
 
         // --------------------------------------------------------
-        // Main parser
+        // Basic parser helpers
         // --------------------------------------------------------
 
-        Object parse() {
+        boolean isEnd() {
+            return i >= s.length();
+        }
 
-            skipWhitespace();
+        int position() {
+            return i;
+        }
 
-            Object value = parseValue();
+        char peek() {
 
-            skipWhitespace();
-
-            if (position != input.length()) {
-
-                throw error(
-                        "Unexpected characters after JSON value.");
+            if (i >= s.length()) {
+                throw new IllegalArgumentException(
+                        "Unexpected end of JSON");
             }
 
-            return value;
+            return s.charAt(i);
+        }
+
+        char next() {
+
+            if (i >= s.length()) {
+                throw new IllegalArgumentException(
+                        "Unexpected end of JSON");
+            }
+
+            return s.charAt(i++);
+        }
+
+        void expect(char expected) {
+
+            if (i >= s.length() || s.charAt(i) != expected) {
+
+                throw new IllegalArgumentException(
+                        "Expected '" + expected +
+                                "' at position " + i);
+            }
+
+            i++;
+        }
+
+        void skipWhitespace() {
+
+            while (i < s.length()
+                    && Character.isWhitespace(s.charAt(i))) {
+                i++;
+            }
         }
 
         // --------------------------------------------------------
-        // Parse value
+        // Parse JSON value
         // --------------------------------------------------------
 
         Object parseValue() {
 
             skipWhitespace();
 
-            if (position >= input.length()) {
-
-                throw error(
-                        "Unexpected end of JSON.");
+            if (isEnd()) {
+                throw new IllegalArgumentException(
+                        "Unexpected end of JSON");
             }
 
-            char c = input.charAt(position);
+            char c = peek();
 
             switch (c) {
 
-                case '{':
-                    return parseObjectValue();
-
-                case '[':
-                    return parseArrayValue();
-
-                case '"':
+                case '"' -> {
                     return parseString();
+                }
 
-                case 't':
-                    parseLiteral("true");
-                    return Boolean.TRUE;
+                case '{' -> {
+                    return parseObject();
+                }
 
-                case 'f':
-                    parseLiteral("false");
-                    return Boolean.FALSE;
+                case '[' -> {
+                    return parseArray();
+                }
 
-                case 'n':
-                    parseLiteral("null");
-                    return null;
+                case 't' -> {
+                    return parseTrue();
+                }
 
-                default:
+                case 'f' -> {
+                    return parseFalse();
+                }
 
-                    if (c == '-'
-                            || c == '+'
-                            || Character.isDigit(c)) {
+                case 'n' -> {
+                    return parseNull();
+                }
 
-                        return parseNumber();
-                    }
-
-                    throw error(
-                            "Unexpected character '" + c + "'.");
+                default -> {
+                    return parseNumber();
+                }
             }
         }
 
@@ -474,18 +339,18 @@ public class Json {
         // Parse object
         // --------------------------------------------------------
 
-        private Map<String, Object> parseObjectValue() {
-
-            expect('{');
+        Map<String, Object> parseObject() {
 
             Map<String, Object> result = new LinkedHashMap<>();
+
+            expect('{');
 
             skipWhitespace();
 
             // Empty object
-            if (peek('}')) {
+            if (peek() == '}') {
 
-                position++;
+                next();
 
                 return result;
             }
@@ -494,10 +359,12 @@ public class Json {
 
                 skipWhitespace();
 
-                if (!peek('"')) {
+                // Object key
+                if (peek() != '"') {
 
-                    throw error(
-                            "Object key must be a string.");
+                    throw new IllegalArgumentException(
+                            "Expected JSON object key at position "
+                                    + i);
                 }
 
                 String key = parseString();
@@ -508,24 +375,25 @@ public class Json {
 
                 skipWhitespace();
 
+                // Object value
                 Object value = parseValue();
 
-                result.put(
-                        key,
-                        value);
+                result.put(key, value);
 
                 skipWhitespace();
 
-                if (peek('}')) {
+                char separator = next();
 
-                    position++;
-
+                if (separator == '}') {
                     break;
                 }
 
-                expect(',');
+                if (separator != ',') {
 
-                skipWhitespace();
+                    throw new IllegalArgumentException(
+                            "Expected ',' or '}' at position "
+                                    + (i - 1));
+                }
             }
 
             return result;
@@ -535,18 +403,18 @@ public class Json {
         // Parse array
         // --------------------------------------------------------
 
-        private List<Object> parseArrayValue() {
-
-            expect('[');
+        List<Object> parseArray() {
 
             List<Object> result = new ArrayList<>();
+
+            expect('[');
 
             skipWhitespace();
 
             // Empty array
-            if (peek(']')) {
+            if (peek() == ']') {
 
-                position++;
+                next();
 
                 return result;
             }
@@ -561,16 +429,18 @@ public class Json {
 
                 skipWhitespace();
 
-                if (peek(']')) {
+                char separator = next();
 
-                    position++;
-
+                if (separator == ']') {
                     break;
                 }
 
-                expect(',');
+                if (separator != ',') {
 
-                skipWhitespace();
+                    throw new IllegalArgumentException(
+                            "Expected ',' or ']' at position "
+                                    + (i - 1));
+                }
             }
 
             return result;
@@ -580,275 +450,213 @@ public class Json {
         // Parse string
         // --------------------------------------------------------
 
-        private String parseString() {
+        String parseString() {
 
             expect('"');
 
-            StringBuilder result = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
 
-            while (position < input.length()) {
+            while (!isEnd()) {
 
-                char c = input.charAt(position++);
+                char c = next();
 
                 if (c == '"') {
-
-                    return result.toString();
+                    return sb.toString();
                 }
 
                 if (c == '\\') {
 
-                    if (position >= input.length()) {
+                    if (isEnd()) {
 
-                        throw error(
-                                "Invalid escape sequence.");
+                        throw new IllegalArgumentException(
+                                "Invalid escape at end of JSON");
                     }
 
-                    char escaped = input.charAt(position++);
+                    char escaped = next();
 
                     switch (escaped) {
 
-                        case '"' ->
-                            result.append('"');
+                        case '"' -> sb.append('"');
 
-                        case '\\' ->
-                            result.append('\\');
+                        case '\\' -> sb.append('\\');
 
-                        case '/' ->
-                            result.append('/');
+                        case '/' -> sb.append('/');
 
-                        case 'b' ->
-                            result.append('\b');
+                        case 'b' -> sb.append('\b');
 
-                        case 'f' ->
-                            result.append('\f');
+                        case 'f' -> sb.append('\f');
 
-                        case 'n' ->
-                            result.append('\n');
+                        case 'n' -> sb.append('\n');
 
-                        case 'r' ->
-                            result.append('\r');
+                        case 'r' -> sb.append('\r');
 
-                        case 't' ->
-                            result.append('\t');
+                        case 't' -> sb.append('\t');
 
                         case 'u' -> {
 
-                            if (position + 4 > input.length()) {
+                            if (i + 4 > s.length()) {
 
-                                throw error(
-                                        "Invalid Unicode escape.");
+                                throw new IllegalArgumentException(
+                                        "Invalid unicode escape");
                             }
 
-                            String hex = input.substring(
-                                    position,
-                                    position + 4);
+                            String hex = s.substring(i, i + 4);
 
                             try {
 
-                                char unicode = (char) Integer.parseInt(
-                                        hex,
-                                        16);
-
-                                result.append(
-                                        unicode);
+                                sb.append(
+                                        (char) Integer.parseInt(
+                                                hex,
+                                                16));
 
                             } catch (NumberFormatException e) {
 
-                                throw error(
-                                        "Invalid Unicode escape: "
+                                throw new IllegalArgumentException(
+                                        "Invalid unicode escape: "
                                                 + hex);
                             }
 
-                            position += 4;
+                            i += 4;
                         }
 
-                        default ->
+                        default -> {
 
-                            throw error(
-                                    "Invalid escape character: "
+                            throw new IllegalArgumentException(
+                                    "Invalid escape sequence: \\"
                                             + escaped);
+                        }
                     }
 
                 } else {
 
-                    if (c < 0x20) {
-
-                        throw error(
-                                "Control character inside string.");
-                    }
-
-                    result.append(c);
+                    sb.append(c);
                 }
             }
 
-            throw error(
-                    "Unterminated JSON string.");
+            throw new IllegalArgumentException(
+                    "Unterminated JSON string");
         }
 
         // --------------------------------------------------------
         // Parse number
         // --------------------------------------------------------
 
-        private Number parseNumber() {
+        Number parseNumber() {
 
-            int start = position;
+            int start = i;
 
-            // Sign
-            if (position < input.length()
-                    && (input.charAt(position) == '-'
-                            || input.charAt(position) == '+')) {
-
-                position++;
+            if (peek() == '-') {
+                i++;
             }
 
             // Integer part
-            while (position < input.length()
-                    && Character.isDigit(
-                            input.charAt(position))) {
-
-                position++;
+            while (i < s.length()
+                    && Character.isDigit(s.charAt(i))) {
+                i++;
             }
 
             // Decimal part
-            if (position < input.length()
-                    && input.charAt(position) == '.') {
+            if (i < s.length() && s.charAt(i) == '.') {
 
-                position++;
+                i++;
 
-                while (position < input.length()
-                        && Character.isDigit(
-                                input.charAt(position))) {
-
-                    position++;
+                while (i < s.length()
+                        && Character.isDigit(s.charAt(i))) {
+                    i++;
                 }
             }
 
             // Exponent
-            if (position < input.length()
-                    && (input.charAt(position) == 'e'
-                            || input.charAt(position) == 'E')) {
+            if (i < s.length()
+                    && (s.charAt(i) == 'e'
+                            || s.charAt(i) == 'E')) {
 
-                position++;
+                i++;
 
-                if (position < input.length()
-                        && (input.charAt(position) == '+'
-                                || input.charAt(position) == '-')) {
-
-                    position++;
+                if (i < s.length()
+                        && (s.charAt(i) == '+'
+                                || s.charAt(i) == '-')) {
+                    i++;
                 }
 
-                while (position < input.length()
-                        && Character.isDigit(
-                                input.charAt(position))) {
-
-                    position++;
+                while (i < s.length()
+                        && Character.isDigit(s.charAt(i))) {
+                    i++;
                 }
             }
 
-            String numberText = input.substring(
-                    start,
-                    position);
+            String number = s.substring(start, i);
 
             try {
 
-                /*
-                 * Return Integer/Long where possible,
-                 * otherwise Double.
-                 */
-                if (!numberText.contains(".")
-                        && !numberText.contains("e")
-                        && !numberText.contains("E")) {
+                if (!number.contains(".")
+                        && !number.contains("e")
+                        && !number.contains("E")) {
 
-                    try {
+                    return Long.parseLong(number);
 
-                        return Integer.parseInt(
-                                numberText);
+                } else {
 
-                    } catch (NumberFormatException ignored) {
-
-                        return Long.parseLong(
-                                numberText);
-                    }
+                    return Double.parseDouble(number);
                 }
-
-                return Double.parseDouble(
-                        numberText);
 
             } catch (NumberFormatException e) {
 
-                throw error(
-                        "Invalid number: "
-                                + numberText);
+                throw new IllegalArgumentException(
+                        "Invalid JSON number: "
+                                + number);
             }
         }
 
         // --------------------------------------------------------
-        // Literal
+        // Parse true
         // --------------------------------------------------------
 
-        private void parseLiteral(
-                String literal) {
+        Boolean parseTrue() {
 
-            if (position + literal.length() > input.length()) {
+            expectLiteral("true");
 
-                throw error(
-                        "Invalid literal.");
-            }
-
-            String actual = input.substring(
-                    position,
-                    position + literal.length());
-
-            if (!actual.equals(literal)) {
-
-                throw error(
-                        "Expected '" + literal + "'.");
-            }
-
-            position += literal.length();
+            return Boolean.TRUE;
         }
 
         // --------------------------------------------------------
-        // Helpers
+        // Parse false
         // --------------------------------------------------------
 
-        private void expect(char expected) {
+        Boolean parseFalse() {
 
-            if (position >= input.length()
-                    || input.charAt(position) != expected) {
+            expectLiteral("false");
 
-                throw error(
-                        "Expected '"
-                                + expected
-                                + "'.");
+            return Boolean.FALSE;
+        }
+
+        // --------------------------------------------------------
+        // Parse null
+        // --------------------------------------------------------
+
+        Object parseNull() {
+
+            expectLiteral("null");
+
+            return null;
+        }
+
+        // --------------------------------------------------------
+        // Parse literal
+        // --------------------------------------------------------
+
+        void expectLiteral(String literal) {
+
+            if (i + literal.length() > s.length()
+                    || !s.startsWith(literal, i)) {
+
+                throw new IllegalArgumentException(
+                        "Expected '" + literal
+                                + "' at position "
+                                + i);
             }
 
-            position++;
-        }
-
-        private boolean peek(char expected) {
-
-            return position < input.length()
-                    && input.charAt(position) == expected;
-        }
-
-        private void skipWhitespace() {
-
-            while (position < input.length()
-                    && Character.isWhitespace(
-                            input.charAt(position))) {
-
-                position++;
-            }
-        }
-
-        private IllegalArgumentException error(
-                String message) {
-
-            return new IllegalArgumentException(
-                    message
-                            + " Position: "
-                            + position);
+            i += literal.length();
         }
     }
 }

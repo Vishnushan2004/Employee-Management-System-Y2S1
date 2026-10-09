@@ -75,6 +75,10 @@ public class EmployeeController {
             if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = com.sliit.ems.util.Security.requireAuth(exchange);
             if (session == null) return;
+            if (session.employeeId == 0) {
+                HttpUtil.sendError(exchange, 403, "This endpoint is only available to staff/employee accounts.");
+                return;
+            }
             try {
                 Employee employee = employeeDAO.findById(session.employeeId);
                 HttpUtil.sendJson(exchange, 200, toMap(employee));
@@ -140,6 +144,10 @@ public class EmployeeController {
             if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = com.sliit.ems.util.Security.requireAuth(exchange);
             if (session == null) return;
+            if (session.employeeId == 0) {
+                HttpUtil.sendError(exchange, 403, "This endpoint is only available to staff/employee accounts.");
+                return;
+            }
             try {
                 Map<String, Object> body = HttpUtil.readJsonBody(exchange);
                 String phone = Json.getString(body, "phoneNumber");
@@ -182,6 +190,9 @@ public class EmployeeController {
         e.dateOfBirth = LocalDate.parse(requireNonBlank(Json.getString(body, "dateOfBirth"), "dateOfBirth"));
         e.gender = requireNonBlank(Json.getString(body, "gender"), "gender");
         e.phoneNumber = requireNonBlank(Json.getString(body, "phoneNumber"), "phoneNumber");
+        if (!com.sliit.ems.util.Validation.isValidPhone(e.phoneNumber)) {
+            throw new IllegalArgumentException("phoneNumber must contain only digits, spaces, '+' or '-'");
+        }
         e.street = Json.getString(body, "street");
         e.city = Json.getString(body, "city");
         e.postalCode = Json.getString(body, "postalCode");

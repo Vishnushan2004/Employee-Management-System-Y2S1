@@ -6,7 +6,7 @@ db.host=localhost
 db.port=1433
 db.name=EmployeeManagementSystem
 db.user=sa
-db.password=Pass@123
+db.password=YOUR_PASSWORD_HERE
 # Set to true only if your SQL Server instance uses a self-signed cert (typical for local dev)
 db.trustServerCertificate=true
 

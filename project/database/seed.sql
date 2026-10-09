@@ -29,23 +29,55 @@ INSERT INTO DESIGNATION (Designation_Name) VALUES
 GO
 
 /* ------------------------------------------------------------
-   2. EMPLOYEE  (includes the 6 stakeholders + a few extra staff)
+   2. EMPLOYEE
+   Only the 6 required staff/stakeholders
    ------------------------------------------------------------ */
+
 INSERT INTO EMPLOYEE
-(Employee_Number, First_Name, Middle_Name, Last_Name, Date_of_Birth, Gender, Phone_Number,
- Street, City, Postal_Code, Department_ID, Designation_ID, Employment_Type, Employment_Status,
- Employment_Start_Date, Work_Location, Supervisor_Employee_ID)
+(
+    Employee_Number,
+    First_Name,
+    Middle_Name,
+    Last_Name,
+    Date_of_Birth,
+    Gender,
+    Phone_Number,
+    Street,
+    City,
+    Postal_Code,
+    Department_ID,
+    Designation_ID,
+    Employment_Type,
+    Employment_Status,
+    Employment_Start_Date,
+    Work_Location,
+    Supervisor_Employee_ID
+)
 VALUES
-('EMP-001','Nadeesha', NULL, 'Perera', '1985-03-12','FEMALE','0771234501','12 Galle Rd','Colombo','00300',1,1,'PERMANENT','ACTIVE','2015-01-05','Head Office',NULL),
-('EMP-002','Imesha', NULL, 'Wickramasinghe', '1987-07-22','FEMALE','0771234502','45 Kandy Rd','Kandy','20000',2,2,'PERMANENT','ACTIVE','2016-02-10','Head Office',NULL),
-('EMP-003','Chamara', NULL, 'Wijesinghe', '1983-11-02','MALE','0771234503','8 Negombo Rd','Negombo','11500',3,3,'PERMANENT','ACTIVE','2014-06-01','Head Office',NULL),
-('EMP-004','Kavindu', NULL, 'Senanayake', '1990-05-18','MALE','0771234504','19 Malabe Rd','Malabe','10115',4,4,'PERMANENT','ACTIVE','2018-09-15','Head Office',NULL),
-('EMP-005','Ravindu', NULL, 'Gunawardena', '1994-09-09','MALE','0771234505','3 Nugegoda Rd','Nugegoda','10250',3,6,'PERMANENT','ACTIVE','2021-03-01','Head Office',3),
-('EMP-006','Tharushi', NULL, 'Fernando', '1992-01-27','FEMALE','0771234506','27 Rajagiriya Rd','Rajagiriya','10107',5,5,'PERMANENT','ACTIVE','2019-07-20','Head Office',NULL),
-('EMP-007','Dilani', 'K.', 'Silva', '1996-04-14','FEMALE','0771234507','5 Battaramulla Rd','Battaramulla','10120',1,7,'CONTRACT','ACTIVE','2023-01-10','Head Office',1),
-('EMP-008','Sahan', NULL, 'Perera', '1998-12-03','MALE','0771234508','66 Maharagama Rd','Maharagama','10280',3,9,'PERMANENT','ACTIVE','2022-05-02','Factory Site',3),
-('EMP-009','Nimesha', NULL, 'Jayasuriya', '1995-08-29','FEMALE','0771234509','14 Kotte Rd','Kotte','10100',2,8,'PERMANENT','ACTIVE','2020-11-11','Head Office',2),
-('EMP-010','Roshan', NULL, 'Bandara', '1999-02-17','MALE','0771234510','21 Wattala Rd','Wattala','11300',5,10,'CONTRACT','ACTIVE','2024-01-08','Head Office',6);
+('EMP-001','Nadeesha',NULL,'Perera','1985-03-12','FEMALE',
+ '0771234501','12 Galle Rd','Colombo','00300',
+ 1,1,'PERMANENT','ACTIVE','2015-01-05','Head Office',NULL),
+
+('EMP-002','Imesha',NULL,'Wickramasinghe','1987-07-22','FEMALE',
+ '0771234502','45 Kandy Rd','Kandy','20000',
+ 2,2,'PERMANENT','ACTIVE','2016-02-10','Head Office',NULL),
+
+('EMP-003','Chamara',NULL,'Wijesinghe','1983-11-02','MALE',
+ '0771234503','8 Negombo Rd','Negombo','11500',
+ 3,3,'PERMANENT','ACTIVE','2014-06-01','Head Office',NULL),
+
+('EMP-004','Kavindu',NULL,'Senanayake','1990-05-18','MALE',
+ '0771234504','19 Malabe Rd','Malabe','10115',
+ 4,4,'PERMANENT','ACTIVE','2018-09-15','Head Office',NULL),
+
+('EMP-005','Ravindu',NULL,'Gunawardena','1994-09-09','MALE',
+ '0771234505','3 Nugegoda Rd','Nugegoda','10250',
+ 3,6,'PERMANENT','ACTIVE','2021-03-01','Head Office',3),
+
+('EMP-006','Tharushi',NULL,'Fernando','1992-01-27','FEMALE',
+ '0771234506','27 Rajagiriya Rd','Rajagiriya','10107',
+ 5,5,'PERMANENT','ACTIVE','2019-07-20','Head Office',NULL);
+
 GO
 
 -- Bring leave balances in line with the leave history seeded below:
@@ -196,7 +228,8 @@ INSERT INTO ROLE (Role_Name, Description) VALUES
 ('FINANCE_PAYROLL_MANAGER','Manages payroll processing and financial reports'),
 ('OPERATIONS_MANAGER','Manages attendance, shifts and leave approvals'),
 ('IT_COORDINATOR','Manages users, roles, permissions and audit logs'),
-('ADMINISTRATIVE_OFFICER','Manages employee records and administrative reports');
+('ADMINISTRATIVE_OFFICER','Manages employee records and administrative reports'),
+('OUTSIDE_USER','Public job-applicant portal access: own profile, open vacancies, own applications/interviews/notifications only');
 
 INSERT INTO PERMISSION (Permission_Name, Module, Action) VALUES
 ('View Employees','EMPLOYEE','VIEW'), ('Manage Employees','EMPLOYEE','UPDATE'),
@@ -229,6 +262,12 @@ INSERT INTO USER_ACCOUNT (Employee_ID, Username, Password_Hash, Role_ID, Account
 (4,'kavindu.it','$2a$10$.DgsHI4JH48SnlFM0Th96euDYMP1dbU5Y/QsIddlyWtUut0R6aJTm', 5, 'ACTIVE'),
 (5,'ravindu.emp','$2a$10$.DgsHI4JH48SnlFM0Th96euDYMP1dbU5Y/QsIddlyWtUut0R6aJTm', 1, 'ACTIVE'),
 (6,'tharushi.admin','$2a$10$.DgsHI4JH48SnlFM0Th96euDYMP1dbU5Y/QsIddlyWtUut0R6aJTm', 6, 'ACTIVE');
+GO
+
+-- Demo OUTSIDE_USER (job-applicant portal) account, linked via Applicant_ID instead of
+-- Employee_ID (Applicant_ID 1 = Amali Rathnayake, inserted above). Same demo password.
+INSERT INTO USER_ACCOUNT (Applicant_ID, Username, Password_Hash, Role_ID, Account_Status) VALUES
+(1,'amali.applicant','$2a$10$.DgsHI4JH48SnlFM0Th96euDYMP1dbU5Y/QsIddlyWtUut0R6aJTm', 7, 'ACTIVE');
 GO
 
 /* ------------------------------------------------------------

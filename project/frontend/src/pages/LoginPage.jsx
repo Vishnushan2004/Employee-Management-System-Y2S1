@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { ErrorBanner } from "../components/Common";
 
 export default function LoginPage() {
@@ -26,8 +26,8 @@ export default function LoginPage() {
       <div className="login-card">
         <div className="login-brand">
           <div className="login-brand-title">Employee Management System</div>
-           <div className="login-brand-subtitle">SLIIT · Group 2026-Y2-S1-NU-07</div>
-        </div> 
+          <div className="login-brand-subtitle">SLIIT · Group 2026-Y2-S1-NU-07</div>
+        </div>
 
         <ErrorBanner message={error} />
 
@@ -61,7 +61,10 @@ export default function LoginPage() {
 
         <div className="login-hint">
           Demo accounts (password: <strong>Pass@123</strong>): nadeesha.hr, imesha.finance,
-          chamara.ops, kavindu.it, ravindu.emp, tharushi.admin
+          chamara.ops, kavindu.it, ravindu.emp, tharushi.admin, amali.applicant
+        </div>
+        <div className="login-hint">
+          Looking for a job? <Link to="/register">Create an applicant account</Link>
         </div>
       </div>
     </div>

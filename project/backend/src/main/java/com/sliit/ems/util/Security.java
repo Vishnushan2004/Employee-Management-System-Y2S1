@@ -5,108 +5,33 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.util.Set;
 
+/**
+ * Small helper so every controller enforces auth/role checks the same way.
+ * IMPORTANT: this is the actual security boundary - the React frontend only
+ * hides buttons for UX, it does not grant or deny access on its own.
+ */
 public class Security {
 
-    // ============================================================
-    // REQUIRE AUTHENTICATION
-    // ============================================================
-
-    public static SessionManager.Session requireAuth(
-            HttpExchange exchange) throws IOException {
-
+    /** Returns the active session for this request, or sends 401 and returns null if missing/expired. */
+    public static SessionManager.Session requireAuth(HttpExchange exchange) throws IOException {
         String token = HttpUtil.getBearerToken(exchange);
-
-        // --------------------------------------------------------
-        // Missing token
-        // --------------------------------------------------------
-
-        if (token == null || token.isBlank()) {
-
-            System.out.println(
-                    "[AUTH] Request rejected: no Bearer token");
-
-            HttpUtil.sendError(
-                    exchange,
-                    401,
-                    "Not authenticated. Please log in again.");
-
-            return null;
-        }
-
-        // --------------------------------------------------------
-        // Find session
-        // --------------------------------------------------------
-
         SessionManager.Session session = SessionManager.get(token);
-
-        // --------------------------------------------------------
-        // Invalid / expired token
-        // --------------------------------------------------------
-
         if (session == null) {
-
-            System.out.println(
-                    "[AUTH] Request rejected: invalid or expired session");
-
-            HttpUtil.sendError(
-                    exchange,
-                    401,
-                    "Not authenticated. Please log in again.");
-
+            HttpUtil.sendError(exchange, 401, "Not authenticated. Please log in again.");
             return null;
         }
-
-        // --------------------------------------------------------
-        // Authentication successful
-        // --------------------------------------------------------
-
         return session;
     }
 
-    // ============================================================
-    // REQUIRE ROLE
-    // ============================================================
-
-    public static SessionManager.Session requireRole(
-            HttpExchange exchange,
-            String... allowedRoles) throws IOException {
-
+    /** Returns the session only if its role is one of the allowed roles, else sends 403 and returns null. */
+    public static SessionManager.Session requireRole(HttpExchange exchange, String... allowedRoles) throws IOException {
         SessionManager.Session session = requireAuth(exchange);
-
-        // IMPORTANT:
-        // Authentication can fail.
-        // Do not access session.roleName if session is null.
-        if (session == null) {
-            return null;
-        }
-
+        if (session == null) return null; // 401 already sent
         Set<String> allowed = Set.of(allowedRoles);
-
-        // --------------------------------------------------------
-        // Check role
-        // --------------------------------------------------------
-
         if (!allowed.contains(session.roleName)) {
-
-            System.out.println(
-                    "[AUTH] Access denied"
-                            + " | User: "
-                            + session.username
-                            + " | Role: "
-                            + session.roleName);
-
-            HttpUtil.sendError(
-                    exchange,
-                    403,
-                    "You do not have permission to perform this action.");
-
+            HttpUtil.sendError(exchange, 403, "You do not have permission to perform this action.");
             return null;
         }
-
-        // --------------------------------------------------------
-        // Authorized
-        // --------------------------------------------------------
-
         return session;
     }
 }

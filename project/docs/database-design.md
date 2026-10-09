@@ -55,3 +55,39 @@ system.
 | kavindu.it | IT_COORDINATOR | Kavindu Senanayake |
 | ravindu.emp | EMPLOYEE | Ravindu Gunawardena |
 | tharushi.admin | ADMINISTRATIVE_OFFICER | Tharushi Fernando |
+| amali.applicant | OUTSIDE_USER | (none - linked via Applicant_ID 1, Amali Rathnayake) |
+
+## Addendum: Outside-user / job-applicant portal (added after initial submission)
+
+A later requirement asked for a public-facing portal so job applicants
+("outside users" with no EMPLOYEE record) can register, browse open
+vacancies, apply, upload a CV, and track their application/interview status
+without staff creating their account for them. This is **additive to the
+original EER**, not a redesign:
+
+- **`USER_ACCOUNT.Employee_ID`** was relaxed from `NOT NULL` to `NULL`-able.
+- **`USER_ACCOUNT.Applicant_ID`** (new) is a nullable, `UNIQUE` FK to
+  `APPLICANT(Applicant_ID)`, mirroring the existing `Employee_ID` FK.
+- **`CK_UserAccount_ExactlyOneOwner`** (new CHECK constraint) enforces that
+  every `USER_ACCOUNT` row has *exactly one* of `Employee_ID` / `Applicant_ID`
+  set - never both, never neither. A login still belongs to exactly one
+  real-world person, it just may now be a staff member *or* an applicant.
+- A new **`OUTSIDE_USER`** role was seeded in `ROLE`, scoped (in application
+  code, via `Security.requireRole`) to: own applicant profile, open
+  vacancies (read-only), own applications, own interview details, own
+  notifications, own CV upload/download. It never sees other applicants'
+  data, employee data, payroll, or any HR/admin screen - enforced server-side
+  by explicit `Applicant_ID` ownership checks on every lookup, never by
+  hiding frontend buttons alone.
+- **CV storage decision**: `APPLICATION.CV_Resume VARCHAR(255)` is left
+  unchanged. It was already just a filename/path string (the existing seed
+  data stores values like `/cv/amali_rathnayake.pdf`), so storing the actual
+  uploaded PDF's bytes on disk under `backend/uploads/cv/` (server-generated
+  UUID filename, gitignored directory) and keeping only that generated
+  filename string in this column is a minimal, schema-compatible choice -
+  it avoids widening the column or adding a BLOB/VARBINARY column, and keeps
+  the database holding only metadata as it already did. The upload endpoint
+  validates the actual decoded byte content (PDF magic bytes, size cap),
+  not just the client-supplied extension or MIME string.
+- No other entity, relationship, or cardinality from the original EER was
+  changed.

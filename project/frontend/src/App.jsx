@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { useAuth } from "./context/useAuth";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layouts/AppLayout";
 import LoginPage from "./pages/LoginPage";
@@ -19,6 +18,11 @@ import TrainingPage from "./pages/TrainingPage";
 import CareerPage from "./pages/CareerPage";
 import UsersPage from "./pages/UsersPage";
 import RolesPermissionsPage from "./pages/RolesPermissionsPage";
+import RegisterPage from "./pages/RegisterPage";
+import ApplicantProfilePage from "./pages/ApplicantProfilePage";
+import VacanciesPage from "./pages/VacanciesPage";
+import ApplyPage from "./pages/ApplyPage";
+import MyApplicationsPage from "./pages/MyApplicationsPage";
 
 function LoginRoute() {
   const { user } = useAuth();
@@ -32,6 +36,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginRoute />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             path="/"
             element={
@@ -57,6 +62,10 @@ export default function App() {
             <Route path="career" element={<CareerPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="roles-permissions" element={<RolesPermissionsPage />} />
+            <Route path="applicant/profile" element={<ApplicantProfilePage />} />
+            <Route path="applicant/vacancies" element={<VacanciesPage />} />
+            <Route path="applicant/apply/:vacancyId" element={<ApplyPage />} />
+            <Route path="applicant/applications" element={<MyApplicationsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

@@ -11,3 +11,7 @@ export async function logout() {
     // ignore network errors on logout - we clear local state regardless
   }
 }
+
+export async function register(data) {
+  return api.post("/auth/register", data);
+}

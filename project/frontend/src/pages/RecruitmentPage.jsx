@@ -205,6 +205,22 @@ function ApplicationsTab() {
     try { await recruitmentService.updateApplicationStatus(id, status); load(); } catch (e) { setError(e.message); }
   }
 
+  async function viewCv(id, cvResume) {
+    if (!cvResume) { setError("This applicant has not uploaded a CV yet."); return; }
+    try {
+      const { filename, fileContentBase64 } = await recruitmentService.downloadCv(id);
+      const byteChars = atob(fileContentBase64);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) bytes[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   return (
     <div>
       <div style={{ textAlign: "right", marginBottom: 12 }}>
@@ -215,12 +231,17 @@ function ApplicationsTab() {
       {!loading && items.length === 0 && <EmptyState label="No applications yet." />}
       {!loading && items.length > 0 && (
         <table className="data-table">
-          <thead><tr><th>Applicant</th><th>Vacancy</th><th>Date</th><th>Expected Salary</th><th>Status</th></tr></thead>
+          <thead><tr><th>Applicant</th><th>Vacancy</th><th>Date</th><th>Expected Salary</th><th>CV</th><th>Status</th></tr></thead>
           <tbody>
             {items.map((a) => (
               <tr key={a.applicationId}>
                 <td>{a.applicantName}</td><td>{a.jobTitle}</td><td>{a.applicationDate}</td>
                 <td>{a.expectedSalary != null ? Number(a.expectedSalary).toLocaleString() : "-"}</td>
+                <td>
+                  {a.cvResume
+                    ? <button className="btn btn-secondary" onClick={() => viewCv(a.applicationId, a.cvResume)}>View CV</button>
+                    : <span className="page-subtitle">Not uploaded</span>}
+                </td>
                 <td>
                   <select value={a.applicationStatus} onChange={(e) => updateStatus(a.applicationId, e.target.value)}>
                     {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}

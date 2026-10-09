@@ -6,13 +6,20 @@ import java.util.Map;
 
 public class AdminDAO {
 
+    /**
+     * Lists every USER_ACCOUNT, staff or outside/applicant user. Employee_ID/Applicant_ID are now
+     * mutually exclusive and nullable (see docs/database-design.md), so these are LEFT JOINs and
+     * employeeName falls back to the applicant's name when the account belongs to an outside user.
+     */
     public List<Map<String, Object>> findAllUsers() throws SQLException {
         return QueryUtil.query("""
-            SELECT u.User_ID AS userId, u.Username AS username, u.Employee_ID AS employeeId,
-                   e.First_Name + ' ' + e.Last_Name AS employeeName, r.Role_ID AS roleId, r.Role_Name AS roleName,
+            SELECT u.User_ID AS userId, u.Username AS username, u.Employee_ID AS employeeId, u.Applicant_ID AS applicantId,
+                   COALESCE(e.First_Name + ' ' + e.Last_Name, a.Name) AS employeeName,
+                   r.Role_ID AS roleId, r.Role_Name AS roleName,
                    u.Account_Status AS accountStatus, u.Last_Login AS lastLogin
             FROM USER_ACCOUNT u
-            JOIN EMPLOYEE e ON e.Employee_ID = u.Employee_ID
+            LEFT JOIN EMPLOYEE e ON e.Employee_ID = u.Employee_ID
+            LEFT JOIN APPLICANT a ON a.Applicant_ID = u.Applicant_ID
             JOIN ROLE r ON r.Role_ID = u.Role_ID
             ORDER BY u.Username
             """, null);

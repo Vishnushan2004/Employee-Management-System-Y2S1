@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { dashboardService } from "../services/miscServices";
 import { StatCard, LoadingState, ErrorBanner } from "../components/Common";
 import { ROLE_LABELS } from "../utils/navConfig";

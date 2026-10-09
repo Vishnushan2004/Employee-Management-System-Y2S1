@@ -1,4 +1,3 @@
-
 package com.sliit.ems.controller;
 
 import com.sliit.ems.dao.*;
@@ -8,12 +7,10 @@ import com.sliit.ems.util.SessionManager;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-/**
- * GET /api/dashboard - returns role-appropriate real counts from SQL Server, no
- * hardcoded numbers.
- */
+/** GET /api/dashboard - returns role-appropriate real counts from SQL Server, no hardcoded numbers. */
 public class DashboardController {
 
     private final EmployeeDAO employeeDAO = new EmployeeDAO();
@@ -28,11 +25,9 @@ public class DashboardController {
 
     public HttpHandler get() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireAuth(exchange);
-            if (session == null)
-                return;
+            if (session == null) return;
             try {
                 Map<String, Object> data = switch (session.roleName) {
                     case "HR_MANAGER" -> hrDashboard();
@@ -40,6 +35,7 @@ public class DashboardController {
                     case "OPERATIONS_MANAGER" -> operationsDashboard();
                     case "IT_COORDINATOR" -> itDashboard();
                     case "ADMINISTRATIVE_OFFICER" -> adminDashboard();
+                    case "OUTSIDE_USER" -> outsideUserDashboard(session.applicantId);
                     default -> employeeDashboard(session.employeeId);
                 };
                 HttpUtil.sendJson(exchange, 200, data);
@@ -94,6 +90,18 @@ public class DashboardController {
         m.put("totalEmployees", employeeDAO.countAll());
         m.put("presentToday", attendanceDAO.countPresentToday());
         m.put("pendingLeaveRequests", leaveDAO.countPending());
+        return m;
+    }
+
+    private Map<String, Object> outsideUserDashboard(int applicantId) throws Exception {
+        List<Map<String, Object>> myApplications = recruitmentDAO.findApplicationsByApplicant(applicantId);
+        long underReview = myApplications.stream()
+            .filter(a -> java.util.Set.of("SUBMITTED", "SHORTLISTED", "INTERVIEWED").contains(a.get("applicationStatus")))
+            .count();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("openVacancies", recruitmentDAO.countOpenVacancies());
+        m.put("myApplications", myApplications.size());
+        m.put("applicationsUnderReview", underReview);
         return m;
     }
 

@@ -52,6 +52,13 @@ export const NAV_BY_ROLE = {
     { to: "/career", label: "My Career History" },
     { to: "/notifications", label: "Notifications" },
   ],
+  OUTSIDE_USER: [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/applicant/profile", label: "My Profile" },
+    { to: "/applicant/vacancies", label: "Job Vacancies" },
+    { to: "/applicant/applications", label: "My Applications" },
+    { to: "/notifications", label: "Notifications" },
+  ],
 };
 
 export const ROLE_LABELS = {
@@ -61,4 +68,5 @@ export const ROLE_LABELS = {
   IT_COORDINATOR: "IT Coordinator",
   ADMINISTRATIVE_OFFICER: "Administrative Officer",
   EMPLOYEE: "Employee",
+  OUTSIDE_USER: "Job Applicant",
 };

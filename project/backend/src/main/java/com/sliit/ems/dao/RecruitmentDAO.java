@@ -1,7 +1,13 @@
 package com.sliit.ems.dao;
 
+import com.sliit.ems.config.Database;
+
+import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.util.List;
 import java.util.Map;
@@ -140,5 +146,169 @@ public class RecruitmentDAO {
         Map<String, Object> row = QueryUtil.queryOne(
             "SELECT COUNT(*) AS c FROM APPLICATION WHERE Application_Status IN ('SUBMITTED','SHORTLISTED')", null);
         return row == null ? 0 : ((Number) row.get("c")).intValue();
+    }
+
+    // ================================================================
+    // Outside-user (job applicant) portal support
+    // ================================================================
+
+    public boolean applicantEmailExists(String email) throws SQLException {
+        Map<String, Object> row = QueryUtil.queryOne("SELECT 1 AS x FROM APPLICANT WHERE Email = ?",
+            ps -> ps.setString(1, email));
+        return row != null;
+    }
+
+    public static class RegisteredApplicant {
+        public final int applicantId;
+        public final int userId;
+        public RegisteredApplicant(int applicantId, int userId) { this.applicantId = applicantId; this.userId = userId; }
+    }
+
+    /**
+     * Creates the APPLICANT row and its USER_ACCOUNT login in a single transaction
+     * (either both are created or neither is - no orphan APPLICANT without a login,
+     * no orphan USER_ACCOUNT without an APPLICANT, matching the CK_UserAccount_ExactlyOneOwner
+     * constraint). The account's Username is the applicant's email address.
+     */
+    public RegisteredApplicant registerApplicantUser(String name, String email, String phone, String passwordHash, int roleId) throws SQLException {
+        try (Connection conn = Database.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int applicantId;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO APPLICANT (Name, Email, Phone_Number) VALUES (?,?,?)",
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, name);
+                    ps.setString(2, email);
+                    ps.setString(3, phone);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (!keys.next()) throw new SQLException("Applicant insert did not return an ID");
+                        applicantId = keys.getInt(1);
+                    }
+                }
+                int userId;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO USER_ACCOUNT (Applicant_ID, Username, Password_Hash, Role_ID, Account_Status) VALUES (?,?,?,?,'ACTIVE')",
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, applicantId);
+                    ps.setString(2, email);
+                    ps.setString(3, passwordHash);
+                    ps.setInt(4, roleId);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (!keys.next()) throw new SQLException("User account insert did not return an ID");
+                        userId = keys.getInt(1);
+                    }
+                }
+                conn.commit();
+                return new RegisteredApplicant(applicantId, userId);
+            } catch (Exception e) {
+                conn.rollback();
+                if (e instanceof SQLException se) throw se;
+                throw new SQLException(e);
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    public Map<String, Object> findApplicantProfile(int applicantId) throws SQLException {
+        return QueryUtil.queryOne("""
+            SELECT Applicant_ID AS applicantId, Name AS name, Email AS email, Phone_Number AS phoneNumber,
+                   Qualifications AS qualifications, Skills AS skills, Work_Experience AS workExperience
+            FROM APPLICANT WHERE Applicant_ID = ?
+            """, ps -> ps.setInt(1, applicantId));
+    }
+
+    /** Email is deliberately NOT updatable here - it is the login username, changing it is out of scope. */
+    public void updateApplicantProfile(int applicantId, String name, String phone, String qualifications, String skills, String experience) throws SQLException {
+        QueryUtil.update("""
+            UPDATE APPLICANT SET Name = ?, Phone_Number = ?, Qualifications = ?, Skills = ?, Work_Experience = ?
+            WHERE Applicant_ID = ?
+            """, ps -> {
+            ps.setString(1, name);
+            ps.setString(2, phone);
+            ps.setString(3, qualifications);
+            ps.setString(4, skills);
+            ps.setString(5, experience);
+            ps.setInt(6, applicantId);
+        });
+    }
+
+    public List<Map<String, Object>> findOpenVacancies() throws SQLException {
+        return QueryUtil.query("""
+            SELECT Vacancy_ID AS vacancyId, Job_Title AS jobTitle, Job_Description AS jobDescription,
+                   Required_Qualifications AS requiredQualifications, Required_Skills AS requiredSkills,
+                   Opening_Date AS openingDate, Closing_Date AS closingDate, Vacancy_Status AS vacancyStatus
+            FROM JOB_VACANCY WHERE Vacancy_Status = 'OPEN' ORDER BY Opening_Date DESC
+            """, null);
+    }
+
+    public boolean vacancyIsOpen(int vacancyId) throws SQLException {
+        Map<String, Object> row = QueryUtil.queryOne("SELECT 1 AS x FROM JOB_VACANCY WHERE Vacancy_ID = ? AND Vacancy_Status = 'OPEN'",
+            ps -> ps.setInt(1, vacancyId));
+        return row != null;
+    }
+
+    public boolean applicantHasAppliedToVacancy(int applicantId, int vacancyId) throws SQLException {
+        Map<String, Object> row = QueryUtil.queryOne(
+            "SELECT 1 AS x FROM APPLICATION WHERE Applicant_ID = ? AND Vacancy_ID = ?",
+            ps -> { ps.setInt(1, applicantId); ps.setInt(2, vacancyId); });
+        return row != null;
+    }
+
+    public List<Map<String, Object>> findApplicationsByApplicant(int applicantId) throws SQLException {
+        return QueryUtil.query("""
+            SELECT a.Application_ID AS applicationId, a.Vacancy_ID AS vacancyId, v.Job_Title AS jobTitle,
+                   a.Application_Date AS applicationDate, a.Application_Status AS applicationStatus,
+                   a.CV_Resume AS cvResume, a.Cover_Letter AS coverLetter, a.Expected_Salary AS expectedSalary
+            FROM APPLICATION a
+            JOIN JOB_VACANCY v ON v.Vacancy_ID = a.Vacancy_ID
+            WHERE a.Applicant_ID = ?
+            ORDER BY a.Application_Date DESC
+            """, ps -> ps.setInt(1, applicantId));
+    }
+
+    /**
+     * Anti-IDOR ownership check: confirms Application_ID {applicationId} actually belongs to
+     * Applicant_ID {applicantId}. MUST be called before returning or modifying any application-scoped
+     * resource (the application itself, its CV, or its interview) on an outside-user-facing endpoint -
+     * never trust a client-supplied application ID alone.
+     */
+    public boolean applicationBelongsToApplicant(int applicationId, int applicantId) throws SQLException {
+        Map<String, Object> row = QueryUtil.queryOne(
+            "SELECT 1 AS x FROM APPLICATION WHERE Application_ID = ? AND Applicant_ID = ?",
+            ps -> { ps.setInt(1, applicationId); ps.setInt(2, applicantId); });
+        return row != null;
+    }
+
+    public void updateApplicationCv(int applicationId, String storedFilename) throws SQLException {
+        QueryUtil.update("UPDATE APPLICATION SET CV_Resume = ? WHERE Application_ID = ?",
+            ps -> { ps.setString(1, storedFilename); ps.setInt(2, applicationId); });
+    }
+
+    /** Returns the stored CV filename for an application, or null if none uploaded yet. Caller must have already checked ownership/authorization. */
+    public String findApplicationCv(int applicationId) throws SQLException {
+        Map<String, Object> row = QueryUtil.queryOne("SELECT CV_Resume AS cvResume FROM APPLICATION WHERE Application_ID = ?",
+            ps -> ps.setInt(1, applicationId));
+        return row == null ? null : (String) row.get("cvResume");
+    }
+
+    /** Small lookup for notification purposes: who owns this application, and for which job. */
+    public Map<String, Object> findApplicationOwnerAndJob(int applicationId) throws SQLException {
+        return QueryUtil.queryOne("""
+            SELECT a.Applicant_ID AS applicantId, v.Job_Title AS jobTitle
+            FROM APPLICATION a JOIN JOB_VACANCY v ON v.Vacancy_ID = a.Vacancy_ID
+            WHERE a.Application_ID = ?
+            """, ps -> ps.setInt(1, applicationId));
+    }
+
+    public Map<String, Object> findInterviewByApplicationId(int applicationId) throws SQLException {
+        return QueryUtil.queryOne("""
+            SELECT Interview_ID AS interviewId, Application_ID AS applicationId, Interview_Date AS interviewDate,
+                   Interview_Time AS interviewTime, Location AS location, Result AS result, Remarks AS remarks
+            FROM INTERVIEW WHERE Application_ID = ?
+            """, ps -> ps.setInt(1, applicationId));
     }
 }

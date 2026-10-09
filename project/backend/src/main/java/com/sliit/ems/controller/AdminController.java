@@ -41,10 +41,7 @@ public class AdminController {
             try {
                 Map<String, Object> body = HttpUtil.readJsonBody(exchange);
                 String password = Json.getString(body, "password");
-                if (password == null || password.length() < 6) {
-                    HttpUtil.sendError(exchange, 400, "Password must be at least 6 characters.");
-                    return;
-                }
+                com.sliit.ems.util.Validation.requireStrongPassword(password);
                 int id = adminDAO.createUserAccount(
                     Json.getInt(body, "employeeId"), Json.getString(body, "username"),
                     PasswordUtil.hash(password), Json.getInt(body, "roleId"));

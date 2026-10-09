@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { employeeService } from "../services/employeeService";
 import { lookupService } from "../services/miscServices";
 import { LoadingState, EmptyState, ErrorBanner, StatusBadge, Modal } from "../components/Common";

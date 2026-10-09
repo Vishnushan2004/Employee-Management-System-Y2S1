@@ -66,6 +66,10 @@ public class LeaveController {
                     HttpUtil.sendError(exchange, 400, "Invalid leave type.");
                     return;
                 }
+                if (reason != null && reason.length() > 500) {
+                    HttpUtil.sendError(exchange, 400, "Reason must be 500 characters or fewer.");
+                    return;
+                }
                 LocalDate start = LocalDate.parse(startDate);
                 LocalDate end = LocalDate.parse(endDate);
                 if (end.isBefore(start)) {

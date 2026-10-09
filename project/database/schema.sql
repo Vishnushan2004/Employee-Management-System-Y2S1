@@ -252,7 +252,7 @@ CREATE TABLE APPLICATION (
     Application_Status VARCHAR(20) NOT NULL
         CHECK (Application_Status IN ('SUBMITTED','SHORTLISTED','INTERVIEWED','OFFERED','REJECTED','HIRED'))
         DEFAULT 'SUBMITTED',
-    CV_Resume          VARCHAR(255) NULL,
+    CV_Resume          VARCHAR(255) NULL, -- generated server-side filename only (e.g. "<uuid>.pdf"); actual file bytes live on disk under backend/uploads/cv/, never in the DB - see docs/database-design.md
     Cover_Letter       VARCHAR(1000) NULL,
     Expected_Salary    DECIMAL(12,2) NULL CHECK (Expected_Salary IS NULL OR Expected_Salary >= 0),
     CONSTRAINT FK_Application_Applicant FOREIGN KEY (Applicant_ID) REFERENCES APPLICANT(Applicant_ID),
@@ -421,7 +421,8 @@ GO
    ============================================================ */
 
 -- Role_Name is UNIQUE only (no CHECK list) so the IT Coordinator can add new
--- roles through the "Manage Roles" screen. The 6 starting roles are seeded
+-- roles through the "Manage Roles" screen. The 7 starting roles (6 staff
+-- roles + OUTSIDE_USER for the public job-applicant portal) are seeded
 -- in seed.sql and documented in docs/database-design.md.
 CREATE TABLE ROLE (
     Role_ID      INT IDENTITY(1,1) PRIMARY KEY,
@@ -447,9 +448,19 @@ CREATE TABLE ROLE_PERMISSION (
     CONSTRAINT FK_RolePermission_Permission FOREIGN KEY (Permission_ID) REFERENCES PERMISSION(Permission_ID)
 );
 
+-- NOTE (additive to the EER, not a redesign): the EER modeled USER_ACCOUNT as
+-- strictly 1:1 with EMPLOYEE (every login belongs to a staff member). The
+-- outside-user/applicant portal needs USER_ACCOUNT rows for people who are
+-- NOT employees (job applicants), so Employee_ID was relaxed to NULL-able and
+-- a parallel nullable, unique Applicant_ID FK was added, with a CHECK
+-- constraint enforcing that exactly one of the two is set per row (never both,
+-- never neither). Since this schema.sql is a from-scratch DDL script run
+-- fresh in SSMS (not a live migration against data), this is done directly in
+-- the CREATE TABLE rather than as separate ALTER statements.
 CREATE TABLE USER_ACCOUNT (
     User_ID         INT IDENTITY(1,1) PRIMARY KEY,
-    Employee_ID     INT NOT NULL UNIQUE, -- 1:1 with EMPLOYEE, total participation per EER
+    Employee_ID     INT NULL UNIQUE, -- 1:1 with EMPLOYEE when this account belongs to a staff member
+    Applicant_ID    INT NULL UNIQUE, -- 1:1 with APPLICANT when this account belongs to an outside/applicant user
     Username        VARCHAR(50) NOT NULL UNIQUE,
     Password_Hash   VARCHAR(255) NOT NULL,
     Role_ID         INT NOT NULL,
@@ -458,7 +469,12 @@ CREATE TABLE USER_ACCOUNT (
         DEFAULT 'ACTIVE',
     Last_Login      DATETIME NULL,
     CONSTRAINT FK_UserAccount_Employee FOREIGN KEY (Employee_ID) REFERENCES EMPLOYEE(Employee_ID),
-    CONSTRAINT FK_UserAccount_Role FOREIGN KEY (Role_ID) REFERENCES ROLE(Role_ID)
+    CONSTRAINT FK_UserAccount_Applicant FOREIGN KEY (Applicant_ID) REFERENCES APPLICANT(Applicant_ID),
+    CONSTRAINT FK_UserAccount_Role FOREIGN KEY (Role_ID) REFERENCES ROLE(Role_ID),
+    CONSTRAINT CK_UserAccount_ExactlyOneOwner CHECK (
+        (CASE WHEN Employee_ID IS NULL THEN 0 ELSE 1 END)
+      + (CASE WHEN Applicant_ID IS NULL THEN 0 ELSE 1 END) = 1
+    )
 );
 GO
 

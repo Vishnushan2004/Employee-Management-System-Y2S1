@@ -20,45 +20,31 @@ public class PerformanceController {
 
     public HttpHandler listGoals() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireAuth(exchange);
-            if (session == null)
-                return;
+            if (session == null) return;
             try {
                 boolean isHr = HR.equals(session.roleName);
                 Map<String, String> query = HttpUtil.parseQuery(exchange);
-                Integer employeeId;
-                if (isHr) {
-                    // HR can optionally filter by a specific employee; with no
-                    // employeeId query param, employeeId stays null (= "all employees").
-                    employeeId = query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId")) : null;
-                } else {
-                    employeeId = session.employeeId;
-                }
+                Integer employeeId = isHr && query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId"))
+                        : isHr ? null : session.employeeId;
                 HttpUtil.sendJson(exchange, 200, performanceDAO.findGoals(employeeId));
             } catch (SQLException e) {
                 AuthController.handleDbError(exchange, e);
-            } catch (Exception e) {
-                System.err.println("[PERFORMANCE] listGoals failed: " + e);
-                e.printStackTrace();
-                HttpUtil.sendError(exchange, 500, "Unexpected server error in listGoals: " + e.getMessage());
             }
         };
     }
 
     public HttpHandler createGoal() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireRole(exchange, HR);
-            if (session == null)
-                return;
+            if (session == null) return;
             try {
                 Map<String, Object> body = HttpUtil.readJsonBody(exchange);
                 int id = performanceDAO.createGoal(
-                        Json.getInt(body, "employeeId"), Json.getString(body, "goalTitle"),
-                        Json.getString(body, "description"), Json.getString(body, "targetValue"));
+                    Json.getInt(body, "employeeId"), Json.getString(body, "goalTitle"),
+                    Json.getString(body, "description"), Json.getString(body, "targetValue"));
                 auditLogDAO.record(session.userId, "CREATE", "PERFORMANCE_GOAL", "Created goal ID " + id);
                 HttpUtil.sendJson(exchange, 201, Map.of("goalId", id));
             } catch (SQLException e) {
@@ -71,11 +57,9 @@ public class PerformanceController {
 
     public HttpHandler updateGoal() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireRole(exchange, HR);
-            if (session == null)
-                return;
+            if (session == null) return;
             int id = HttpUtil.extractIdFromPath(exchange);
             try {
                 Map<String, Object> body = HttpUtil.readJsonBody(exchange);
@@ -90,44 +74,32 @@ public class PerformanceController {
 
     public HttpHandler listReviews() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireAuth(exchange);
-            if (session == null)
-                return;
+            if (session == null) return;
             try {
                 boolean isHr = HR.equals(session.roleName);
                 Map<String, String> query = HttpUtil.parseQuery(exchange);
-                Integer employeeId;
-                if (isHr) {
-                    employeeId = query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId")) : null;
-                } else {
-                    employeeId = session.employeeId;
-                }
+                Integer employeeId = isHr && query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId"))
+                        : isHr ? null : session.employeeId;
                 HttpUtil.sendJson(exchange, 200, performanceDAO.findReviews(employeeId));
             } catch (SQLException e) {
                 AuthController.handleDbError(exchange, e);
-            } catch (Exception e) {
-                System.err.println("[PERFORMANCE] listReviews failed: " + e);
-                e.printStackTrace();
-                HttpUtil.sendError(exchange, 500, "Unexpected server error in listReviews: " + e.getMessage());
             }
         };
     }
 
     public HttpHandler createReview() {
         return exchange -> {
-            if (HttpUtil.handlePreflight(exchange))
-                return;
+            if (HttpUtil.handlePreflight(exchange)) return;
             SessionManager.Session session = Security.requireRole(exchange, HR);
-            if (session == null)
-                return;
+            if (session == null) return;
             try {
                 Map<String, Object> body = HttpUtil.readJsonBody(exchange);
                 Double score = body.get("performanceScore") != null ? Json.getDouble(body, "performanceScore") : null;
                 int id = performanceDAO.createReview(
-                        Json.getInt(body, "employeeId"), Json.getString(body, "reviewDate"),
-                        Json.getString(body, "reviewPeriod"), score, Json.getString(body, "feedback"));
+                    Json.getInt(body, "employeeId"), Json.getString(body, "reviewDate"),
+                    Json.getString(body, "reviewPeriod"), score, Json.getString(body, "feedback"));
                 auditLogDAO.record(session.userId, "CREATE", "PERFORMANCE_REVIEW", "Created review ID " + id);
                 HttpUtil.sendJson(exchange, 201, Map.of("reviewId", id));
             } catch (SQLException e) {
