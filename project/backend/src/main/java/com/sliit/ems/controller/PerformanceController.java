@@ -26,11 +26,20 @@ public class PerformanceController {
             try {
                 boolean isHr = HR.equals(session.roleName);
                 Map<String, String> query = HttpUtil.parseQuery(exchange);
-                Integer employeeId = isHr && query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId"))
-                        : isHr ? null : session.employeeId;
+                Integer employeeId;
+                if (isHr && query.containsKey("employeeId")) {
+                    employeeId = Integer.parseInt(query.get("employeeId"));
+                } else if (isHr) {
+                    employeeId = null;
+                } else {
+                    employeeId = session.employeeId;
+                }
                 HttpUtil.sendJson(exchange, 200, performanceDAO.findGoals(employeeId));
             } catch (SQLException e) {
                 AuthController.handleDbError(exchange, e);
+            } catch (Exception e) {
+                e.printStackTrace();
+                HttpUtil.sendError(exchange, 500, "Could not load performance goals: " + e.getMessage());
             }
         };
     }
@@ -80,11 +89,20 @@ public class PerformanceController {
             try {
                 boolean isHr = HR.equals(session.roleName);
                 Map<String, String> query = HttpUtil.parseQuery(exchange);
-                Integer employeeId = isHr && query.containsKey("employeeId") ? Integer.parseInt(query.get("employeeId"))
-                        : isHr ? null : session.employeeId;
+                Integer employeeId;
+                if (isHr && query.containsKey("employeeId")) {
+                    employeeId = Integer.parseInt(query.get("employeeId"));
+                } else if (isHr) {
+                    employeeId = null;
+                } else {
+                    employeeId = session.employeeId;
+                }
                 HttpUtil.sendJson(exchange, 200, performanceDAO.findReviews(employeeId));
             } catch (SQLException e) {
                 AuthController.handleDbError(exchange, e);
+            } catch (Exception e) {
+                e.printStackTrace();
+                HttpUtil.sendError(exchange, 500, "Could not load performance reviews: " + e.getMessage());
             }
         };
     }

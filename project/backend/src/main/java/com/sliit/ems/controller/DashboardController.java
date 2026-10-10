@@ -80,7 +80,7 @@ public class DashboardController {
     private Map<String, Object> itDashboard() throws Exception {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("activeEmployees", employeeDAO.countActive());
-        m.put("totalUsers", adminDAO.findAllUsers().size());
+        m.put("totalUsers", employeeDAO.countActive());
         m.put("recentAuditActivity", auditLogDAO.findRecent(5).size());
         return m;
     }

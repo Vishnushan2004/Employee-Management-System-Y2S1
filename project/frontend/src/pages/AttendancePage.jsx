@@ -58,15 +58,15 @@ export default function AttendancePage() {
         <div>
           <h1 className="page-title">{isStaff ? "Attendance" : "My Attendance"}</h1>
           <div className="page-subtitle">
-            {isStaff ? "Attendance records across the organization" : "Check in and check out, and review your history"}
+            {isStaff
+              ? "Check in/out for yourself, and review attendance records across the organization"
+              : "Check in and check out, and review your history"}
           </div>
         </div>
-        {!isStaff && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="btn" disabled={actionLoading} onClick={doCheckIn}>Check In</button>
-            <button className="btn btn-secondary" disabled={actionLoading} onClick={doCheckOut}>Check Out</button>
-          </div>
-        )}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn" disabled={actionLoading} onClick={doCheckIn}>Check In</button>
+          <button className="btn btn-secondary" disabled={actionLoading} onClick={doCheckOut}>Check Out</button>
+        </div>
       </div>
 
       <ErrorBanner message={error || actionError} />

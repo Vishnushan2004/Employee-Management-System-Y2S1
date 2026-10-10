@@ -1,3 +1,4 @@
+
 const API_BASE = "http://localhost:8080/api";
 
 function getToken() {
@@ -6,39 +7,81 @@ function getToken() {
 
 async function request(path, { method = "GET", body, params } = {}) {
   let url = `${API_BASE}${path}`;
+
   if (params) {
     const query = new URLSearchParams(
-      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
+      Object.entries(params).filter(
+        ([, value]) =>
+          value !== undefined &&
+          value !== null &&
+          value !== ""
+      )
     ).toString();
-    if (query) url += `?${query}`;
+
+    if (query) {
+      url += `?${query}`;
+    }
   }
 
-  const headers = { "Content-Type": "application/json" };
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-  let data = null;
+  let response;
+
+  try {
+    response = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    console.error("API connection failed:", url, error);
+    throw new Error(
+      "Cannot connect to the backend. Check that the Java server is running."
+    );
+  }
+
   const text = await response.text();
+  let data = null;
+
   if (text) {
     try {
       data = JSON.parse(text);
     } catch {
-      data = null;
+      data = text;
     }
   }
 
   if (!response.ok) {
-    const message = (data && data.error) || `Request failed (${response.status})`;
-    const error = new Error(message);
-    error.status = response.status;
-    throw error;
+    const message =
+      data && typeof data === "object" && data.error
+        ? data.error
+        : `Request failed (${response.status})`;
+
+    console.error("API error:", {
+      url,
+      status: response.status,
+      response: data,
+    });
+
+    if (response.status === 401) {
+      throw new Error("Session expired or invalid. Please log in again.");
+    }
+
+    throw new Error(message);
   }
+
   return data;
 }
 

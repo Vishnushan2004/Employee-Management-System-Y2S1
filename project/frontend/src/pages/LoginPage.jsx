@@ -33,7 +33,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-field">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Username or Email</label>
             <input
               id="username"
               type="text"
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
         <div className="login-hint">
           Demo accounts (password: <strong>Pass@123</strong>): nadeesha.hr, imesha.finance,
-          chamara.ops, kavindu.it, ravindu.emp, tharushi.admin, amali.applicant
+          chamara.ops, kavindu.it, ravindu.emp, tharushi.admin, ajith@gmail.com
         </div>
         <div className="login-hint">
           Looking for a job? <Link to="/register">Create an applicant account</Link>
