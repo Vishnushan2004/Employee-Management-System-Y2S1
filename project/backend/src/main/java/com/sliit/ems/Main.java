@@ -18,8 +18,8 @@ import java.util.concurrent.Executors;
  * Application entry point. Starts a plain Java SE HTTP server (no external
  * web framework) and registers all API routes.
  *
- * Run with:  java -cp "out;lib/*" com.sliit.ems.Main   (Windows)
- *            java -cp "out:lib/*" com.sliit.ems.Main   (macOS/Linux)
+ * Run with: java -cp "out;lib/*" com.sliit.ems.Main (Windows)
+ * java -cp "out:lib/*" com.sliit.ems.Main (macOS/Linux)
  */
 public class Main {
 
@@ -46,6 +46,7 @@ public class Main {
         LookupController lookups = new LookupController();
         NotificationController notifications = new NotificationController();
         AuditLogController auditLogs = new AuditLogController();
+        ReportsController reports = new ReportsController();
         ShiftController shifts = new ShiftController();
         PayrollController payroll = new PayrollController();
         RecruitmentController recruitment = new RecruitmentController();
@@ -64,18 +65,20 @@ public class Main {
         server.createContext("/api/public/vacancies", applicantPortal.publicOpenVacancies());
 
         // ---- Outside-user (job applicant) portal ----
-        server.createContext("/api/applicant/profile", methodRouter(applicantPortal.getProfile(), applicantPortal.updateProfile()));
-        server.createContext("/api/applicant/applications", methodRouter(applicantPortal.listMyApplications(), applicantPortal.apply()));
+        server.createContext("/api/applicant/profile",
+                methodRouter(applicantPortal.getProfile(), applicantPortal.updateProfile()));
+        server.createContext("/api/applicant/applications",
+                methodRouter(applicantPortal.listMyApplications(), applicantPortal.apply()));
         server.createContext("/api/applicant/applications/", suffixRouter(Map.of(
-            "/cv", applicantPortal.cv(),
-            "/interview", applicantPortal.interviewForApplication()
-        )));
+                "/cv", applicantPortal.cv(),
+                "/interview", applicantPortal.interviewForApplication())));
 
         // ---- Dashboard ----
         server.createContext("/api/dashboard", dashboard.get());
 
         // ---- Employees ----
-        // Order matters: more specific paths are registered; HttpServer routes by longest prefix match.
+        // Order matters: more specific paths are registered; HttpServer routes by
+        // longest prefix match.
         server.createContext("/api/employees/me", methodRouter(employees.getMe(), employees.updateOwnProfile()));
         server.createContext("/api/employees", methodRouter(employees.list(), employees.create()));
         server.createContext("/api/employees/", employeeByIdRouter(employees));
@@ -83,10 +86,9 @@ public class Main {
         // ---- Leaves ----
         server.createContext("/api/leaves", methodRouter(leaves.list(), leaves.apply()));
         server.createContext("/api/leaves/", suffixRouter(Map.of(
-            "/approve", leaves.approve(),
-            "/reject", leaves.reject(),
-            "/cancel", leaves.cancel()
-        )));
+                "/approve", leaves.approve(),
+                "/reject", leaves.reject(),
+                "/cancel", leaves.cancel())));
 
         // ---- Attendance ----
         server.createContext("/api/attendance/check-in", attendance.checkIn());
@@ -105,6 +107,7 @@ public class Main {
 
         // ---- Audit logs ----
         server.createContext("/api/audit-logs", auditLogs.list());
+        server.createContext("/api/admin/reports", reports.adminReports());
 
         // ---- Shifts ----
         server.createContext("/api/shifts", methodRouter(shifts.listShifts(), shifts.createShift()));
@@ -116,34 +119,36 @@ public class Main {
         server.createContext("/api/payroll/detail/", payroll.detail());
         server.createContext("/api/payroll", methodRouter(payroll.list(), payroll.process()));
         server.createContext("/api/payroll/", suffixRouter(Map.of(
-            "/verify", payroll.verify(),
-            "/pay", payroll.markPaid()
-        )));
+                "/verify", payroll.verify(),
+                "/pay", payroll.markPaid())));
 
         // ---- Recruitment ----
         server.createContext("/api/vacancies", methodRouter(recruitment.listVacancies(), recruitment.createVacancy()));
         server.createContext("/api/vacancies/", suffixRouter(Map.of("/status", recruitment.updateVacancyStatus())));
-        server.createContext("/api/applicants", methodRouter(recruitment.listApplicants(), recruitment.createApplicant()));
-        server.createContext("/api/applications", methodRouter(recruitment.listApplications(), recruitment.createApplication()));
+        server.createContext("/api/applicants",
+                methodRouter(recruitment.listApplicants(), recruitment.createApplicant()));
+        server.createContext("/api/applications",
+                methodRouter(recruitment.listApplications(), recruitment.createApplication()));
         server.createContext("/api/applications/", suffixRouter(Map.of(
-            "/status", recruitment.updateApplicationStatus(),
-            "/cv", recruitment.downloadCvForHr()
-        )));
-        server.createContext("/api/interviews", methodRouter(recruitment.listInterviews(), recruitment.scheduleInterview()));
+                "/status", recruitment.updateApplicationStatus(),
+                "/cv", recruitment.downloadCvForHr())));
+        server.createContext("/api/interviews",
+                methodRouter(recruitment.listInterviews(), recruitment.scheduleInterview()));
         server.createContext("/api/interviews/", suffixRouter(Map.of("/result", recruitment.recordInterviewResult())));
 
         // ---- Performance ----
         server.createContext("/api/performance/goals", methodRouter(performance.listGoals(), performance.createGoal()));
         server.createContext("/api/performance/goals/", performance.updateGoal());
-        server.createContext("/api/performance/reviews", methodRouter(performance.listReviews(), performance.createReview()));
+        server.createContext("/api/performance/reviews",
+                methodRouter(performance.listReviews(), performance.createReview()));
 
         // ---- Training / Certification ----
         server.createContext("/api/training", methodRouter(training.listTraining(), training.createTraining()));
         server.createContext("/api/training/", suffixRouter(Map.of(
-            "/assign", training.assignTraining(),
-            "/attendees", training.attendees()
-        )));
-        server.createContext("/api/certifications", methodRouter(training.listCertifications(), training.createCertification()));
+                "/assign", training.assignTraining(),
+                "/attendees", training.attendees())));
+        server.createContext("/api/certifications",
+                methodRouter(training.listCertifications(), training.createCertification()));
 
         // ---- Promotion / Transfer ----
         server.createContext("/api/promotions", methodRouter(career.listPromotions(), career.createPromotion()));
@@ -152,9 +157,8 @@ public class Main {
         // ---- Admin: users / roles / permissions ----
         server.createContext("/api/users", methodRouter(admin.listUsers(), admin.createUser()));
         server.createContext("/api/users/", suffixRouter(Map.of(
-            "/status", admin.setAccountStatus(),
-            "/role", admin.changeRole()
-        )));
+                "/status", admin.setAccountStatus(),
+                "/role", admin.changeRole())));
         server.createContext("/api/permissions", methodRouter(admin.listPermissions(), admin.createPermission()));
         server.createContext("/api/permissions/role/", admin.permissionsForRole());
         server.createContext("/api/role-permissions", methodRouter(null, admin.assignPermission()));
@@ -163,7 +167,10 @@ public class Main {
         System.out.println("Employee Management System backend running on http://localhost:" + port);
     }
 
-    /** Dispatches GET to one handler and POST/PUT to another on the same path (JDK HttpServer has no verb routing). */
+    /**
+     * Dispatches GET to one handler and POST/PUT to another on the same path (JDK
+     * HttpServer has no verb routing).
+     */
     private static HttpHandler methodRouter(HttpHandler getHandler, HttpHandler postHandler) {
         return exchange -> {
             String method = exchange.getRequestMethod();
@@ -203,12 +210,16 @@ public class Main {
     }
 
     /**
-     * Generic dispatcher for "/{id}/action" style sub-paths registered under one context
-     * (e.g. /api/leaves/{id}/approve, /api/payroll/{id}/verify). Matches by path suffix.
+     * Generic dispatcher for "/{id}/action" style sub-paths registered under one
+     * context
+     * (e.g. /api/leaves/{id}/approve, /api/payroll/{id}/verify). Matches by path
+     * suffix.
      */
     private static HttpHandler suffixRouter(Map<String, HttpHandler> actionsBySuffix) {
-        // LinkedHashMap iteration order preserved from Map.of is not guaranteed, but suffixes
-        // here never overlap as prefixes of one another, so match order does not matter.
+        // LinkedHashMap iteration order preserved from Map.of is not guaranteed, but
+        // suffixes
+        // here never overlap as prefixes of one another, so match order does not
+        // matter.
         Map<String, HttpHandler> actions = new LinkedHashMap<>(actionsBySuffix);
         return exchange -> {
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {

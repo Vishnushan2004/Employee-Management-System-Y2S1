@@ -23,6 +23,7 @@ import ApplicantProfilePage from "./pages/ApplicantProfilePage";
 import VacanciesPage from "./pages/VacanciesPage";
 import ApplyPage from "./pages/ApplyPage";
 import MyApplicationsPage from "./pages/MyApplicationsPage";
+import AdminReportsPage from "./pages/AdminReportsPage";
 
 function LoginRoute() {
   const { user } = useAuth();
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="applicant/vacancies" element={<VacanciesPage />} />
             <Route path="applicant/apply/:vacancyId" element={<ApplyPage />} />
             <Route path="applicant/applications" element={<MyApplicationsPage />} />
+            <Route path="admin-reports" element={<AdminReportsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

@@ -38,6 +38,7 @@ export const NAV_BY_ROLE = {
     { to: "/employees", label: "Employees" },
     { to: "/attendance", label: "Attendance" },
     { to: "/leaves", label: "Leave Processing" },
+    { to: "/admin-reports", label: "Administrative Reports" },
     { to: "/notifications", label: "Notifications" },
   ],
   EMPLOYEE: [

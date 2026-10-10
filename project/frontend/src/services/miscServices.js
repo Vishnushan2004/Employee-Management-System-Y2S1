@@ -18,3 +18,8 @@ export const notificationService = {
 export const auditLogService = {
   list: () => api.get("/audit-logs"),
 };
+
+
+export const reportsService = {
+  getAdminReports: () => api.get("/admin/reports"),
+};

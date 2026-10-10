@@ -421,7 +421,20 @@ table.data-table tbody tr:hover {
 }
 
 
-/* Login Page */
+/* login page */
+
+
+/* admin */
+
+@media print {
+  .sidebar, .topbar, .no-print {
+    display: none !important;
+  }
+  .content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
 
 
 
