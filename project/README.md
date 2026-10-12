@@ -19,6 +19,13 @@ Ctrl + shift + P to solve red code errors
 
 java *** reload
 
+# To Push with Branch
+
+git checkout -b <branch-name>  # Create branch in local
+
+git push -u origin <branch-name>  # Use when push
+
+
 
 
 # Web-Based Employee Management System
