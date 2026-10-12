@@ -13,7 +13,7 @@ import {
 
 const EDIT_ROLES = ["HR_MANAGER", "ADMINISTRATIVE_OFFICER"];
 
-// Returns today's date in YYYY-MM-DD format using local time.
+// Returns today's date in local YYYY-MM-DD format.
 function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -23,17 +23,34 @@ function getTodayDate() {
   return `${year}-${month}-${day}`;
 }
 
-// Calculates the employee's actual age, accounting for their birthday.
+// Validates a YYYY-MM-DD date without converting it to UTC.
+function isValidDateString(value) {
+  if (typeof value !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  const date = new Date(year, month - 1, day);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  );
+}
+
+// Calculates age using the employee's local calendar date.
 function calculateAge(dateOfBirth) {
-  const dob = new Date(`${dateOfBirth}T00:00:00`);
+  const [year, month, day] = dateOfBirth.split("-").map(Number);
   const today = new Date();
 
-  let age = today.getFullYear() - dob.getFullYear();
+  let age = today.getFullYear() - year;
 
   const birthdayNotReached =
-    today.getMonth() < dob.getMonth() ||
-    (today.getMonth() === dob.getMonth() &&
-      today.getDate() < dob.getDate());
+    today.getMonth() + 1 < month ||
+    (today.getMonth() + 1 === month && today.getDate() < day);
 
   if (birthdayNotReached) {
     age--;
@@ -51,12 +68,7 @@ function validateEmployee(form) {
     return "Please enter the employee's Date of Birth.";
   }
 
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(form.dateOfBirth) ||
-    Number.isNaN(new Date(`${form.dateOfBirth}T00:00:00`).getTime()) ||
-    new Date(`${form.dateOfBirth}T00:00:00`).toISOString().slice(0, 10) !==
-      form.dateOfBirth
-  ) {
+  if (!isValidDateString(form.dateOfBirth)) {
     return "Please enter a valid Date of Birth.";
   }
 
@@ -69,7 +81,7 @@ function validateEmployee(form) {
   }
 
   // Phone Number validation
-  const phone = form.phoneNumber.trim().replace(/[\s()-]/g, "");
+  const phone = (form.phoneNumber || "").trim().replace(/[\s()-]/g, "");
 
   if (!/^(?:0\d{9}|\+94\d{9})$/.test(phone)) {
     return (
@@ -83,15 +95,7 @@ function validateEmployee(form) {
     return "Please enter the Employment Start Date.";
   }
 
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(form.employmentStartDate) ||
-    Number.isNaN(
-      new Date(`${form.employmentStartDate}T00:00:00`).getTime()
-    ) ||
-    new Date(`${form.employmentStartDate}T00:00:00`)
-      .toISOString()
-      .slice(0, 10) !== form.employmentStartDate
-  ) {
+  if (!isValidDateString(form.employmentStartDate)) {
     return "Please enter a valid Employment Start Date.";
   }
 
@@ -254,7 +258,6 @@ function AddEmployeeModal({ onClose, onSaved }) {
       [field]: value,
     }));
 
-    // Clear the old validation message when the user edits a field.
     setError("");
   }
 
@@ -262,7 +265,6 @@ function AddEmployeeModal({ onClose, onSaved }) {
     e.preventDefault();
     setError("");
 
-    // Stop submission if any validation fails.
     const validationError = validateEmployee(form);
 
     if (validationError) {
@@ -335,7 +337,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
               id="firstName"
               required
               value={form.firstName}
-              onChange={(e) => update("firstName", e.target.value)}
+              onChange={(e) =>
+                update("firstName", e.target.value)
+              }
             />
           </div>
 
@@ -345,7 +349,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
               id="lastName"
               required
               value={form.lastName}
-              onChange={(e) => update("lastName", e.target.value)}
+              onChange={(e) =>
+                update("lastName", e.target.value)
+              }
             />
           </div>
         </div>
@@ -359,7 +365,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
               required
               max={today}
               value={form.dateOfBirth}
-              onChange={(e) => update("dateOfBirth", e.target.value)}
+              onChange={(e) =>
+                update("dateOfBirth", e.target.value)
+              }
             />
           </div>
 
@@ -386,7 +394,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
             maxLength={16}
             placeholder="0712345678"
             value={form.phoneNumber}
-            onChange={(e) => update("phoneNumber", e.target.value)}
+            onChange={(e) =>
+              update("phoneNumber", e.target.value)
+            }
           />
           <small>
             Enter 10 digits, e.g. 0712345678, or +94712345678.
@@ -400,7 +410,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
               id="departmentId"
               required
               value={form.departmentId}
-              onChange={(e) => update("departmentId", e.target.value)}
+              onChange={(e) =>
+                update("departmentId", e.target.value)
+              }
             >
               <option value="">Select...</option>
               {departments.map((department) => (
@@ -417,7 +429,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
               id="designationId"
               required
               value={form.designationId}
-              onChange={(e) => update("designationId", e.target.value)}
+              onChange={(e) =>
+                update("designationId", e.target.value)
+              }
             >
               <option value="">Select...</option>
               {designations.map((designation) => (
@@ -451,7 +465,9 @@ function AddEmployeeModal({ onClose, onSaved }) {
           <input
             id="workLocation"
             value={form.workLocation}
-            onChange={(e) => update("workLocation", e.target.value)}
+            onChange={(e) =>
+              update("workLocation", e.target.value)
+            }
           />
         </div>
 
