@@ -1,7 +1,7 @@
 package com.sliit.ems.controller;
 
-import com.sliit.ems.dao.RecruitmentDAO;
-import com.sliit.ems.dao.UserAccountDAO;
+import com.sliit.ems.dao.hr.RecruitmentDAO;
+import com.sliit.ems.dao.it.UserAccountDAO;
 import com.sliit.ems.service.AuthService;
 import com.sliit.ems.util.HttpUtil;
 import com.sliit.ems.util.Json;
@@ -123,7 +123,7 @@ public class AuthController {
         };
     }
 
-    static void handleDbError(HttpExchange exchange, SQLException e) throws IOException {
+    public static void handleDbError(HttpExchange exchange, SQLException e) throws IOException {
         System.err.println("Database error: " + e.getMessage());
         HttpUtil.sendError(exchange, 500, "A server error occurred. Please try again.");
     }

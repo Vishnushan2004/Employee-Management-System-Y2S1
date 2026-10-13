@@ -1,7 +1,7 @@
 package com.sliit.ems.service;
 
-import com.sliit.ems.dao.AuditLogDAO;
-import com.sliit.ems.dao.UserAccountDAO;
+import com.sliit.ems.dao.it.AuditLogDAO;
+import com.sliit.ems.dao.it.UserAccountDAO;
 import com.sliit.ems.model.UserAccount;
 import com.sliit.ems.util.PasswordUtil;
 import com.sliit.ems.util.SessionManager;

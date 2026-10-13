@@ -1,7 +1,7 @@
 package com.sliit.ems.controller;
 
-import com.sliit.ems.dao.AuditLogDAO;
-import com.sliit.ems.dao.RecruitmentDAO;
+import com.sliit.ems.dao.it.AuditLogDAO;
+import com.sliit.ems.dao.hr.RecruitmentDAO;
 import com.sliit.ems.util.FileStorage;
 import com.sliit.ems.util.HttpUtil;
 import com.sliit.ems.util.Json;

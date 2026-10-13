@@ -1,6 +1,12 @@
 package com.sliit.ems.controller;
 
 import com.sliit.ems.dao.*;
+import com.sliit.ems.dao.hr.RecruitmentDAO;
+import com.sliit.ems.dao.hr.PerformanceDAO;
+import com.sliit.ems.dao.hr.TrainingCertDAO;
+import com.sliit.ems.dao.finance.PayrollDAO;
+import com.sliit.ems.dao.it.AdminDAO;
+import com.sliit.ems.dao.it.AuditLogDAO;
 import com.sliit.ems.util.HttpUtil;
 import com.sliit.ems.util.Security;
 import com.sliit.ems.util.SessionManager;
